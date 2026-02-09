@@ -406,19 +406,14 @@
   }
 
   // ---------- Copy payload ----------
-  async function copyCardToClipboard({ seed, card, marks }) {
-    const payload = {
-      type: "implecs-music-bingo",
-      seed,
-      generatedAt: new Date().toISOString(),
-      markedCount: countMarks(marks),
-      card: card.map((x, i) => ({
-        index: i + 1,
-        name: x.name,
-        title: x.title,
-        marked: !!marks[i]
-      }))
-    };
+  async function copyCardToClipboard({ card }) {
+    const text = card
+      .map(x => `${x.name} - ${x.title}`)
+      .join('\n');
+  
+    await navigator.clipboard.writeText(text);
+    return text;
+  }
 
     const text = JSON.stringify(payload, null, 2);
 
@@ -470,33 +465,30 @@
   });
 
   btnCopy.addEventListener('click', async () => {
+    const text = currentCard.map(x => `${x.name} - ${x.title}`).join('\n');
+  
     try {
-      await copyCardToClipboard({ seed, card: currentCard, marks: currentMarks });
+      await navigator.clipboard.writeText(text);
       btnCopy.textContent = 'Скопировано ✅';
       setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
     } catch (e) {
-      // Fallback
-      const fallbackText = JSON.stringify({
-        type: "implecs-music-bingo",
-        seed,
-        markedCount: countMarks(currentMarks),
-        card: currentCard.map((x, i) => ({ index: i + 1, name: x.name, title: x.title, marked: !!currentMarks[i] }))
-      }, null, 2);
-
+      // Fallback для старых браузеров
       const ta = document.createElement('textarea');
-      ta.value = fallbackText;
+      ta.value = text;
       document.body.appendChild(ta);
       ta.select();
       document.execCommand('copy');
       ta.remove();
-
+  
       btnCopy.textContent = 'Скопировано ✅';
       setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
     }
   });
+
 
   init();
 })();
 </script>
 </body>
 </html>
+
