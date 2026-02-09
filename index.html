@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>implecs - мызыкальное бинго</title>
+  <style>
+    :root{
+      --bg: #0b0f17;
+      --card: #111a2a;
+      --cell: rgba(255,255,255,.06);
+      --cellHover: rgba(255,255,255,.10);
+      --border: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --artist: #7bd3ff;
+      --song: #ffd27b;
+      --mark: rgba(0,0,0,.45);
+      --accent: #7cffc7;
+      --danger: #ff7b7b;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+    }
+
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 30% -10%, rgba(124,255,199,.18), transparent 60%),
+                  radial-gradient(1100px 650px at 100% 10%, rgba(123,211,255,.18), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 20px;
+    }
+
+    .wrap{
+      width: min(980px, 100%);
+      display:grid;
+      gap: 14px;
+    }
+
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 18px 18px 14px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    h1{
+      margin:0;
+      font-size: 20px;
+      letter-spacing: .2px;
+    }
+    .sub{
+      margin-top:6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      justify-content:flex-end;
+    }
+
+    button{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    button:hover{ background: rgba(255,255,255,.10); }
+    button:active{ transform: translateY(1px); }
+
+    .btn-accent{
+      border-color: rgba(124,255,199,.35);
+      background: rgba(124,255,199,.12);
+    }
+    .btn-danger{
+      border-color: rgba(255,123,123,.35);
+      background: rgba(255,123,123,.12);
+    }
+
+    .board{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .cell{
+      position:relative;
+      min-height: 92px;
+      padding: 10px 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: var(--cell);
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      text-align:center;
+      transition: background .15s ease, border-color .15s ease, transform .08s ease;
+      user-select:none;
+      overflow:hidden;
+    }
+    .cell:hover{
+      background: var(--cellHover);
+      border-color: rgba(255,255,255,.16);
+    }
+    .cell:active{ transform: translateY(1px); }
+
+    .artist{
+      color: var(--artist);
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1.15;
+      text-transform: none;
+    }
+    .song{
+      color: var(--song);
+      margin-top: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      line-height: 1.15;
+    }
+
+    .cell.marked{
+      border-color: rgba(124,255,199,.35);
+      background: rgba(124,255,199,.10);
+    }
+    .cell.marked::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(135deg, transparent 47%, rgba(0,0,0,.55) 49%, rgba(0,0,0,.55) 51%, transparent 53%),
+        linear-gradient(45deg, transparent 47%, rgba(0,0,0,.55) 49%, rgba(0,0,0,.55) 51%, transparent 53%);
+      opacity: .55;
+      pointer-events:none;
+    }
+
+    .footerline{
+      margin-top: 10px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 2px 4px 0;
+    }
+
+    .pill{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    @media (max-width: 720px){
+      header{ flex-direction:column; }
+      .controls{ justify-content:flex-start; }
+      .cell{ min-height: 80px; }
+      .artist,.song{ font-size: 12px; }
+      .grid{ gap: 8px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>implecs - мызыкальное бинго</h1>
+        <div class="sub">
+          Нажимай на клетки, чтобы зачёркивать. Кнопкой «Скопировать» отправляй ведущему для проверки. 🎵
+        </div>
+      </div>
+      <div class="controls">
+        <button id="btnCopy" class="btn-accent">Скопировать карточку</button>
+        <button id="btnRefresh">Обновить карточку</button>
+        <button id="btnClear" class="btn-danger">Очистить зачёркивания</button>
+      </div>
+    </header>
+
+    <div class="board">
+      <div id="grid" class="grid" aria-label="Bingo grid"></div>
+      <div class="footerline">
+        <div class="pill">seed: <span id="seedText"></span></div>
+        <div class="pill">отмечено: <span id="markedCount">0</span>/25</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const GRID_SIZE = 5;
+  const CELLS = GRID_SIZE * GRID_SIZE;
+  const SONGS_URL = 'songs.json';
+
+  const gridEl = document.getElementById('grid');
+  const seedTextEl = document.getElementById('seedText');
+  const markedCountEl = document.getElementById('markedCount');
+
+  const btnCopy = document.getElementById('btnCopy');
+  const btnRefresh = document.getElementById('btnRefresh');
+  const btnClear = document.getElementById('btnClear');
+
+  // ---------- Seed / URL ----------
+  const url = new URL(window.location.href);
+  let seed = url.searchParams.get('seed');
+
+  if (!seed) {
+    seed = makeSeed();
+    url.searchParams.set('seed', seed);
+    history.replaceState(null, '', url.toString());
+  }
+  seedTextEl.textContent = seed;
+
+  // ---------- Storage key per seed ----------
+  const storageKey = (suffix) => `music-bingo:${seed}:${suffix}`;
+
+  // ---------- Seeded RNG ----------
+  // Simple, stable PRNG based on xmur3 + sfc32 pattern.
+  function xmur3(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function() {
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= h >>> 16;
+      return h >>> 0;
+    };
+  }
+
+  function sfc32(a, b, c, d) {
+    return function() {
+      a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+      let t = (a + b) | 0;
+      a = b ^ (b >>> 9);
+      b = (c + (c << 3)) | 0;
+      c = (c << 21) | (c >>> 11);
+      d = (d + 1) | 0;
+      t = (t + d) | 0;
+      c = (c + t) | 0;
+      return (t >>> 0) / 4294967296;
+    };
+  }
+
+  function makeRng(seedStr) {
+    const h = xmur3(seedStr);
+    return sfc32(h(), h(), h(), h());
+  }
+
+  function makeSeed() {
+    // короткий, но достаточно случайный для ссылки
+    const a = Math.random().toString(36).slice(2, 8);
+    const b = Math.random().toString(36).slice(2, 8);
+    return `${a}${b}`;
+  }
+
+  function shuffleInPlace(arr, rng) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function normalizeKey(s) {
+    return String(s ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  // ---------- Data ----------
+  async function loadSongs() {
+    const res = await fetch(SONGS_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Не удалось загрузить songs.json');
+    const raw = await res.json();
+
+    if (!Array.isArray(raw)) throw new Error('songs.json должен быть массивом объектов');
+
+    // Clean & keep only valid entries
+    const cleaned = raw
+      .map(x => ({ name: String(x.name ?? '').trim(), title: String(x.title ?? '').trim() }))
+      .filter(x => x.name && x.title);
+
+    // Deduplicate by (name+title) ignoring case/spaces
+    const seen = new Set();
+    const uniq = [];
+    for (const s of cleaned) {
+      const key = `${normalizeKey(s.name)}|${normalizeKey(s.title)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      uniq.push(s);
+    }
+    return uniq;
+  }
+
+  function pickCard(songs, seedStr) {
+    if (songs.length < CELLS) {
+      throw new Error(`В songs.json должно быть минимум ${CELLS} уникальных песен. Сейчас: ${songs.length}`);
+    }
+    const rng = makeRng(seedStr);
+    const pool = songs.slice();
+    shuffleInPlace(pool, rng);
+    return pool.slice(0, CELLS);
+  }
+
+  // ---------- Marks ----------
+  function loadMarks() {
+    try {
+      const v = localStorage.getItem(storageKey('marks'));
+      if (!v) return Array(CELLS).fill(false);
+      const parsed = JSON.parse(v);
+      if (!Array.isArray(parsed) || parsed.length !== CELLS) return Array(CELLS).fill(false);
+      return parsed.map(Boolean);
+    } catch {
+      return Array(CELLS).fill(false);
+    }
+  }
+
+  function saveMarks(marks) {
+    localStorage.setItem(storageKey('marks'), JSON.stringify(marks));
+  }
+
+  function countMarks(marks) {
+    return marks.reduce((a, b) => a + (b ? 1 : 0), 0);
+  }
+
+  function updateMarkedCounter(marks) {
+    markedCountEl.textContent = String(countMarks(marks));
+  }
+
+  // ---------- Render ----------
+  function render(card, marks) {
+    gridEl.innerHTML = '';
+    card.forEach((item, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (marks[idx] ? ' marked' : '');
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+      cell.setAttribute('aria-pressed', marks[idx] ? 'true' : 'false');
+
+      const artist = document.createElement('div');
+      artist.className = 'artist';
+      artist.textContent = item.name;
+
+      const song = document.createElement('div');
+      song.className = 'song';
+      song.textContent = item.title;
+
+      cell.appendChild(artist);
+      cell.appendChild(song);
+
+      const toggle = () => {
+        marks[idx] = !marks[idx];
+        saveMarks(marks);
+        cell.classList.toggle('marked', marks[idx]);
+        cell.setAttribute('aria-pressed', marks[idx] ? 'true' : 'false');
+        updateMarkedCounter(marks);
+      };
+
+      cell.addEventListener('click', toggle);
+      cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+
+      gridEl.appendChild(cell);
+    });
+
+    updateMarkedCounter(marks);
+  }
+
+  // ---------- Copy payload ----------
+  async function copyCardToClipboard({ seed, card, marks }) {
+    const payload = {
+      type: "implecs-music-bingo",
+      seed,
+      generatedAt: new Date().toISOString(),
+      markedCount: countMarks(marks),
+      card: card.map((x, i) => ({
+        index: i + 1,
+        name: x.name,
+        title: x.title,
+        marked: !!marks[i]
+      }))
+    };
+
+    const text = JSON.stringify(payload, null, 2);
+
+    // Prefer modern clipboard API
+    await navigator.clipboard.writeText(text);
+    return payload;
+  }
+
+  // ---------- Init ----------
+  let currentSongs = [];
+  let currentCard = [];
+  let currentMarks = loadMarks();
+
+  async function init() {
+    try {
+      currentSongs = await loadSongs();
+
+      // Card is derived from seed (same seed => same card)
+      currentCard = pickCard(currentSongs, seed);
+
+      // Save card into storage for “audit trail”
+      localStorage.setItem(storageKey('card'), JSON.stringify(currentCard));
+
+      // Render
+      render(currentCard, currentMarks);
+    } catch (err) {
+      gridEl.innerHTML = '';
+      const msg = document.createElement('div');
+      msg.style.padding = '16px';
+      msg.style.color = 'rgba(255,255,255,.85)';
+      msg.textContent = 'Ошибка: ' + (err?.message || String(err));
+      gridEl.appendChild(msg);
+    }
+  }
+
+  // ---------- Buttons ----------
+  btnClear.addEventListener('click', () => {
+    currentMarks = Array(CELLS).fill(false);
+    saveMarks(currentMarks);
+    render(currentCard, currentMarks);
+  });
+
+  btnRefresh.addEventListener('click', () => {
+    // New seed => new card
+    const newSeed = makeSeed();
+    const u = new URL(window.location.href);
+    u.searchParams.set('seed', newSeed);
+    window.location.href = u.toString();
+  });
+
+  btnCopy.addEventListener('click', async () => {
+    try {
+      await copyCardToClipboard({ seed, card: currentCard, marks: currentMarks });
+      btnCopy.textContent = 'Скопировано ✅';
+      setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
+    } catch (e) {
+      // Fallback
+      const fallbackText = JSON.stringify({
+        type: "implecs-music-bingo",
+        seed,
+        markedCount: countMarks(currentMarks),
+        card: currentCard.map((x, i) => ({ index: i + 1, name: x.name, title: x.title, marked: !!currentMarks[i] }))
+      }, null, 2);
+
+      const ta = document.createElement('textarea');
+      ta.value = fallbackText;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+
+      btnCopy.textContent = 'Скопировано ✅';
+      setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
+    }
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
