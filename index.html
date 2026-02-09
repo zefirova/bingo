@@ -464,26 +464,28 @@
     window.location.href = u.toString();
   });
 
-  btnCopy.addEventListener('click', async () => {
+  btnCopy.addEventListener('click', () => {
     const text = currentCard.map(x => `${x.name} - ${x.title}`).join('\n');
   
-    try {
-      await navigator.clipboard.writeText(text);
-      btnCopy.textContent = 'Скопировано ✅';
-      setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
-    } catch (e) {
-      // Fallback для старых браузеров
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        btnCopy.textContent = 'Скопировано ✅';
+        setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
+      })
+      .catch(() => {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
   
-      btnCopy.textContent = 'Скопировано ✅';
-      setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
-    }
+        btnCopy.textContent = 'Скопировано ✅';
+        setTimeout(() => (btnCopy.textContent = 'Скопировать карточку'), 1200);
+      });
   });
+
 
 
   init();
@@ -491,4 +493,5 @@
 </script>
 </body>
 </html>
+
 
