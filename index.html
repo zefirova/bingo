@@ -405,23 +405,6 @@
     updateMarkedCounter(marks);
   }
 
-  // ---------- Copy payload ----------
-  async function copyCardToClipboard({ card }) {
-    const text = card
-      .map(x => `${x.name} - ${x.title}`)
-      .join('\n');
-  
-    await navigator.clipboard.writeText(text);
-    return text;
-  }
-
-    const text = JSON.stringify(payload, null, 2);
-
-    // Prefer modern clipboard API
-    await navigator.clipboard.writeText(text);
-    return payload;
-  }
-
   // ---------- Init ----------
   let currentSongs = [];
   let currentCard = [];
@@ -493,5 +476,6 @@
 </script>
 </body>
 </html>
+
 
 
